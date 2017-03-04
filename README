@@ -1,0 +1,24 @@
+
+# Embedded Lua
+
+Small framework for embedding Lua in C / C++ code. Combines the speed of a
+natively compiled language like C or C++ with the flexibility of a scripting
+language like Lua for an all-round solution.
+
+
+## TODO
+
+- User friendly stack interface
+- Wrapper for free functions
+    - Lua => C++
+    - C++ => Lua
+- Wrapper for objects
+    - Lua => C++
+    - C++ => Lua
+
+
+## Licenses
+
+This framework makes use of Lua. Lua is licensed under the MIT
+license, just like this project!
+
