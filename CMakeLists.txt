@@ -3,7 +3,7 @@ project(lua++)
 
 # Warnings + compiler specific flags:
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    set(CXX_WARNINGS "-Werror -Weverything -pedantic -Wno-c++98-compat")
+    set(CXX_WARNINGS "-Werror -Weverything -pedantic -Wno-c++98-compat -Wno-exit-time-destructors")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     set(CXX_WARNINGS "-Werror -Wall -Wextra -pedantic -Wno-c++98-compat")
