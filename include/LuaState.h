@@ -1,13 +1,12 @@
 #pragma once
 #include <string>
 #include <LuaFunctionBuilder.hpp>
+#include <LuaStack.h>
 #include <Result.h>
 
 
 namespace lpp
 {
-    class LuaStack;
-
     /**
      * Class responsible for managing a Lua instance.
      * Provides high level functions for interfacing with the Lua side of things.
@@ -55,6 +54,16 @@ namespace lpp
          * Get the interface to the lower level Lua stack.
          */
         const std::shared_ptr<LuaStack>& get_stack() const;
+
+        /**
+         * Exports a function from C++ to Lua.
+         */
+        template <typename ReturnType, typename... ParameterTypes>
+        Result export_function(ExportableFunction<ReturnType, ParameterTypes...> f,
+                               std::string&& lua_function_name) const
+        {
+            return m_pstack->export_function(f, std::move(lua_function_name));
+        }
 
     private:
         std::shared_ptr<LuaStack> m_pstack;

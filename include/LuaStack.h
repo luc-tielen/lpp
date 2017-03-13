@@ -4,6 +4,7 @@
 #include <string>
 #include <lua.hpp>
 #include <Result.h>
+#include <LuaStackHelpers.hpp>
 
 
 namespace lpp
@@ -62,21 +63,11 @@ namespace lpp
             return LuaStackGetter(m_plua, location);
         }
 
-        /**
-         * Pushes an element onto the stack.
-         */
-        void push(const uint8_t& value) const;
-        void push(const uint16_t& value) const;
-        void push(const uint32_t& value) const;
-        //void push(const uint64_t& value)
-        void push(const int8_t& value) const;
-        void push(const int16_t& value) const;
-        void push(const int32_t& value) const;
-        //void push(const int64_t& value)
-        void push(const float& value) const;
-        void push(const double& value) const;
-        void push(const bool& value) const;
-        void push(const std::string& value) const;
+        template <typename T>
+        void push(const T& value) const
+        {
+            StackPusher(m_plua).push(value);
+        }
 
         /**
          * Pops X amount of elements of the stack.
@@ -88,68 +79,17 @@ namespace lpp
          */
         void get_global(const std::string& global) const;
 
+        /**
+         * Exports a function from C++ to Lua.
+         */
+        template <typename ReturnType, typename... ParameterTypes>
+        Result export_function(ExportableFunction<ReturnType, ParameterTypes...> f,
+                               std::string&& lua_function_name) const
+        {
+            return export_function_helper(m_plua, f, std::move(lua_function_name));
+        }
+
     private:
         lua_State* const m_plua;
-
-        /**
-         * Helper class for getting an element of the stack.
-         */
-        class LuaStackGetter
-        {
-        public:
-            LuaStackGetter(lua_State* plua, const int& location)
-                : m_plua(plua)
-                , m_location(location)
-            {
-                assert(plua);
-            }
-
-            operator uint8_t() const
-            {
-                return static_cast<uint8_t>(lua_tonumber(m_plua, m_location));
-            }
-            operator uint16_t() const
-            {
-                return static_cast<uint16_t>(lua_tonumber(m_plua, m_location));
-            }
-            operator uint32_t() const
-            {
-                return static_cast<uint32_t>(lua_tonumber(m_plua, m_location));
-            }
-            operator int8_t() const
-            {
-                return static_cast<int8_t>(lua_tonumber(m_plua, m_location));
-            }
-            operator int16_t() const
-            {
-                return static_cast<int16_t>(lua_tonumber(m_plua, m_location));
-            }
-            operator int32_t() const
-            {
-                return static_cast<int32_t>(lua_tonumber(m_plua, m_location));
-            }
-            operator float() const
-            {
-                return static_cast<float>(lua_tonumber(m_plua, m_location));
-            }
-            operator double() const
-            {
-                return static_cast<double>(lua_tonumber(m_plua, m_location));
-            }
-            operator bool() const
-            {
-                return lua_toboolean(m_plua, m_location);
-            }
-            operator std::string() const
-            {
-                const char* str = lua_tostring(m_plua, m_location);
-                if (!str) str = "";
-                return str;
-            }
-
-        private:
-            lua_State* m_plua;
-            const int& m_location;
-        };
     };
 }

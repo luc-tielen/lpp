@@ -37,54 +37,13 @@ namespace lpp
     }
 
     Result LuaStack::pcall(uint32_t param_amount,
-                        uint32_t return_amount,
-                        int32_t err_handler) const
+                           uint32_t return_amount,
+                           int32_t err_handler) const
     {
         // TODO err handling? LuaError class instead of returncode?
         return lua_pcall(m_plua, param_amount, return_amount, err_handler) == LUA_OK
             ? Result::OK
             : Result::ERROR;
-    }
-
-    void LuaStack::push(const uint8_t& value) const
-    {
-        lua_pushnumber(m_plua, value);
-    }
-    void LuaStack::push(const uint16_t& value) const
-    {
-        lua_pushnumber(m_plua, value);
-    }
-    void LuaStack::push(const uint32_t& value) const
-    {
-        lua_pushnumber(m_plua, value);
-    }
-    void LuaStack::push(const int8_t& value) const
-    {
-        lua_pushnumber(m_plua, value);
-    }
-    void LuaStack::push(const int16_t& value) const
-    {
-        lua_pushnumber(m_plua, value);
-    }
-    void LuaStack::push(const int32_t& value) const
-    {
-        lua_pushnumber(m_plua, value);
-    }
-    void LuaStack::push(const float& value) const
-    {
-        lua_pushnumber(m_plua, static_cast<const double>(value));
-    }
-    void LuaStack::push(const double& value) const
-    {
-        lua_pushnumber(m_plua, value);
-    }
-    void LuaStack::push(const bool& value) const
-    {
-        lua_pushboolean(m_plua, value);
-    }
-    void LuaStack::push(const std::string& value) const
-    {
-        lua_pushlstring(m_plua, value.c_str(), value.length());
     }
 
     void LuaStack::pop(uint32_t amount) const
