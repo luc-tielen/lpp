@@ -70,64 +70,60 @@ namespace lpp
         const int& m_location;
     };
 
+
     /**
-     * Helper class for pushing an element onto the Lua stack.
+     * Helper function for pushing an element onto the Lua stack.
      */
-    class StackPusher
+    inline void push_on_stack(lua_State* plua, const uint8_t& value)
     {
-    public:
-        StackPusher(lua_State* plua) : m_plua(plua)
-        {
-            assert(m_plua);
-        }
-
-        /**
-         * Pushes an element onto the stack.
-         */
-        void push(const uint8_t& value) const
-        {
-            lua_pushnumber(m_plua, value);
-        }
-        void push(const uint16_t& value) const
-        {
-            lua_pushnumber(m_plua, value);
-        }
-        void push(const uint32_t& value) const
-        {
-            lua_pushnumber(m_plua, value);
-        }
-        void push(const int8_t& value) const
-        {
-            lua_pushnumber(m_plua, value);
-        }
-        void push(const int16_t& value) const
-        {
-            lua_pushnumber(m_plua, value);
-        }
-        void push(const int32_t& value) const
-        {
-            lua_pushnumber(m_plua, value);
-        }
-        void push(const float& value) const
-        {
-            lua_pushnumber(m_plua, static_cast<const double>(value));
-        }
-        void push(const double& value) const
-        {
-            lua_pushnumber(m_plua, value);
-        }
-        void push(const bool& value) const
-        {
-            lua_pushboolean(m_plua, value);
-        }
-        void push(const std::string& value) const
-        {
-            lua_pushlstring(m_plua, value.c_str(), value.length());
-        }
-
-    private:
-        lua_State* m_plua;
-    };
+        assert(plua);
+        lua_pushnumber(plua, value);
+    }
+    inline void push_on_stack(lua_State* plua, const uint16_t& value)
+    {
+        assert(plua);
+        lua_pushnumber(plua, value);
+    }
+    inline void push_on_stack(lua_State* plua, const uint32_t& value)
+    {
+        assert(plua);
+        lua_pushnumber(plua, value);
+    }
+    inline void push_on_stack(lua_State* plua, const int8_t& value)
+    {
+        assert(plua);
+        lua_pushnumber(plua, value);
+    }
+    inline void push_on_stack(lua_State* plua, const int16_t& value)
+    {
+        assert(plua);
+        lua_pushnumber(plua, value);
+    }
+    inline void push_on_stack(lua_State* plua, const int32_t& value)
+    {
+        assert(plua);
+        lua_pushnumber(plua, value);
+    }
+    inline void push_on_stack(lua_State* plua, const float& value)
+    {
+        assert(plua);
+        lua_pushnumber(plua, static_cast<const double>(value));
+    }
+    inline void push_on_stack(lua_State* plua, const double& value)
+    {
+        assert(plua);
+        lua_pushnumber(plua, value);
+    }
+    inline void push_on_stack(lua_State* plua, const bool& value)
+    {
+        assert(plua);
+        lua_pushboolean(plua, value);
+    }
+    inline void push_on_stack(lua_State* plua, const std::string& value)
+    {
+        assert(plua);
+        lua_pushlstring(plua, value.c_str(), value.length());
+    }
 
 
     template <typename ParamType, typename... AccumParamTypes>
@@ -195,7 +191,7 @@ namespace lpp
         auto params = fetch_params<ParamTypes...>(plua_state);
         auto result = apply_function(f, std::move(params), indices);
         lua_pop(plua_state, num_args);
-        StackPusher(plua_state).push(result);
+        push_on_stack(plua_state, result);
         return 1;
     }
 
