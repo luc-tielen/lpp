@@ -56,4 +56,4 @@ SCENARIO ("Importing C++ functions into Lua")
 }
 
 //TODO multiple return types... ; lambda / function pointer
-//TODO fix types (string cant be passed as const& yet)
+//TODO exception handling
