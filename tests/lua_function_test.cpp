@@ -36,10 +36,32 @@ SCENARIO ("Importing Lua functions into C++")
                 REQUIRE (xxx == "xxx");
             }
         }
+    }
 
-        // TODO error cases!
+    GIVEN ("A Lua function that raises an error")
+    {
+        LuaState lua;
+        auto bad_func = lua.import_function_from("tests/lua_function_test.lua")
+                           .with_name("bad_func")
+                           .with_return_type<int32_t>()
+                           .with_params<>()
+                           .build();
+
+        WHEN ("the imported function is called")
+        {
+            THEN ("it should raise an exception in C++")
+            {
+                try
+                {
+                    bad_func();
+                    REQUIRE((false && "code execution should never come here!"));
+                }
+                catch (lpp::LuaError& e)
+                {
+                    REQUIRE(std::string(e.what()) == "attempt to call a nil value");
+                }
+            }
+        }
     }
 }
-
-// TODO check result after loading multiple lua files..
 

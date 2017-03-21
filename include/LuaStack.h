@@ -66,7 +66,7 @@ namespace lpp
         template <typename T>
         void push(const T& value) const
         {
-            StackPusher(m_plua).push(value);
+            push_on_stack(m_plua, value);
         }
 
         /**

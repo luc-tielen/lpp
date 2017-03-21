@@ -3,6 +3,7 @@
 #include <lua.hpp>
 #include <string>
 #include <LuaStack.h>
+#include <LuaError.h>
 
 
 namespace lpp
@@ -27,27 +28,26 @@ namespace lpp
             //TODO move to load file?
             if (m_pstack->load_file(m_file) == Result::ERROR)
             {
-                // TODO create LuaError class..
                 const std::string err = std::string("Could not load file: ")
                                       + m_pstack->get<std::string>(-1);
-                throw std::runtime_error(err);
+                throw LuaError(err);
             }
 
             // TODO move to pcall?
             if (m_pstack->pcall(0, 0, 0) == Result::ERROR)  // Prime the file once to load globals
             {
-                const std::string err = std::string("Could not prime file: ")
+                const std::string err = std::string("Could not prepare file: ")
                                       + m_pstack->get<std::string>(-1);
                 throw std::runtime_error(err);
             }
         }
         LuaFunction(const LuaFunction&) = default;
         LuaFunction& operator=(const LuaFunction&) = default;
-        LuaFunction(LuaFunction&& other)
+        LuaFunction(LuaFunction&& other) noexcept
             : m_pstack(other.m_pstack)
             , m_file(std::move(other.m_file))
             , m_func_name(std::move(other.m_func_name)) {}
-        LuaFunction& operator=(LuaFunction&& other)
+        LuaFunction& operator=(LuaFunction&& other) noexcept
         {
             m_pstack = other.m_pstack;
             m_file = std::move(other.m_file);
@@ -61,7 +61,16 @@ namespace lpp
             LuaStack& stack = *m_pstack;
             stack.get_global(m_func_name);       // Push function on stack
             push_on_stack(args...);              // Push values on stack
-            stack.pcall(sizeof...(args), 1, 0);  // Execute function   TODO error handling
+
+            // Execute function
+            if (stack.pcall(sizeof...(args), 1, 0) == Result::ERROR)
+            {
+                // Error occurred, raise exception.
+                auto err_msg = stack.get<std::string>(-1);
+                throw LuaError(err_msg);
+            }
+
+            // No error, retrieve result
             T result = stack.get<T>(-1);         // Get result (now on top of stack)
             stack.pop(1);                        // Pop return value of stack (cleanup)
             return result;
