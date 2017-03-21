@@ -1,5 +1,6 @@
 #pragma once
 #include <lua.hpp>
+#include <LuaError.h>
 
 
 namespace lpp
@@ -180,11 +181,22 @@ namespace lpp
     }
 
     template <typename ReturnType, typename... ParamTypes, size_t... Is>
-    auto apply_function(ExportableFunction<ReturnType, ParamTypes...> f,
+    auto apply_function(lua_State* plua_state,
+                        ExportableFunction<ReturnType, ParamTypes...> f,
                         std::tuple<ParamTypes...>&& params,
                         std::index_sequence<Is...>)
     {
-        return f(std::get<Is>(params)...);
+        try
+        {
+            return f(std::get<Is>(params)...);
+        }
+        catch(const std::exception& e)
+        {
+            push_on_stack(plua_state, e.what());
+            lua_error(plua_state);
+        }
+
+        throw lpp::LuaError("Received unknown error during apply_function!");
     }
 
     template <typename ReturnType, typename... ParamTypes>
@@ -196,7 +208,8 @@ namespace lpp
 
         auto f = *reinterpret_cast<Function*>(lua_touserdata(plua_state, lua_upvalueindex(1)));
         auto params = fetch_params<ParamTypes...>(plua_state);
-        auto result = apply_function(f, std::forward<decltype(params)>(params), indices);
+        auto result = apply_function(plua_state, f,
+                                     std::forward<decltype(params)>(params), indices);
         lua_pop(plua_state, num_args);
         push_on_stack(plua_state, result);
         return 1;

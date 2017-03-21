@@ -1,5 +1,4 @@
 #include <LuaStack.h>
-#include <LuaError.h>
 
 
 namespace lpp

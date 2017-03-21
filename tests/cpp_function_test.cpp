@@ -6,9 +6,12 @@
 using lpp::LuaState;
 using lpp::LuaFunction;
 
+static const std::string ERROR_MSG = "an example error msg";
+
 
 int32_t add(int32_t x, int32_t y);
 std::string multiply_string(std::string str, uint8_t count);
+int bad_function(int);
 
 
 int32_t add(int32_t x, int32_t y)
@@ -25,13 +28,20 @@ std::string multiply_string(std::string str, uint8_t count)
 }
 
 
+int bad_function(int)
+{
+    throw std::runtime_error(ERROR_MSG);
+}
+
+
 SCENARIO ("Importing C++ functions into Lua")
 {
-    GIVEN ("An exported C++ function")
+    GIVEN ("Exported C++ functions to Lua interpreter")
     {
         LuaState lua;
         lua.export_function(add, "add");
         lua.export_function(multiply_string, "multiply_string");
+        lua.export_function(bad_function, "bad_function");
 
         WHEN ("the exported functions are called in Lua")
         {
@@ -52,8 +62,28 @@ SCENARIO ("Importing C++ functions into Lua")
 		        REQUIRE (z == multiply_string("x", 3));
             }
         }
+
+        AND_WHEN ("a C++ function raises an error")
+        {
+            THEN ("it is forwarded to the Lua interpreter to be handled there.")
+            {
+                // NOTE: in Lua the error is raised again so it is caught back in C++ for testing purposes
+                try
+                {
+                    lua.run_file("tests/bad_cpp_function_test.lua");
+                    REQUIRE ((false && "unreachable code!"));
+                }
+                catch (lpp::LuaError& e)
+                {
+                    auto err_msg = std::string("tests/bad_cpp_function_test.lua:5: ")
+                                 + "Error from C++, rethrown in Lua";
+                    REQUIRE (std::string(e.what()) == err_msg);
+                }
+            }
+        }
     }
 }
 
 //TODO multiple return types... ; lambda / function pointer
-//TODO exception handling
+//TODO function with void return type...
+//TODO function with 0 args...

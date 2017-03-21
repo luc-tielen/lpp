@@ -56,7 +56,7 @@ SCENARIO ("LuaState usage (incorrect usage)")
                 }
                 catch (lpp::LuaError e)
                 {
-                    REQUIRE (std::string(e.what) == "cannot open incorrect.lua: No such file or directory");
+                    REQUIRE (std::string(e.what()) == "cannot open incorrect.lua: No such file or directory");
                 }
             }
         }
@@ -72,9 +72,8 @@ SCENARIO ("LuaState usage (incorrect usage)")
                 }
                 catch (lpp::LuaError e)
                 {
-                    auto expected_error = "[string \"unknown_func()\"]:1: attempt to call a nil value (global 'unknown_func')");
-                    REQUIRE (std::string(e.what) == expected_error);
-
+                    auto expected_error = "[string \"unknown_func()\"]:1: attempt to call a nil value (global 'unknown_func')";
+                    REQUIRE (std::string(e.what()) == expected_error);
                 }
             }
         }
