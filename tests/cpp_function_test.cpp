@@ -12,6 +12,8 @@ static const std::string ERROR_MSG = "an example error msg";
 int32_t add(int32_t x, int32_t y);
 std::string multiply_string(std::string str, uint8_t count);
 int bad_function(int);
+void void_function();
+int identity(int);
 
 
 int32_t add(int32_t x, int32_t y)
@@ -33,6 +35,10 @@ int bad_function(int)
     throw std::runtime_error(ERROR_MSG);
 }
 
+void void_function() {}
+
+int identity(int x) { return x; }
+
 
 SCENARIO ("Importing C++ functions into Lua")
 {
@@ -41,7 +47,9 @@ SCENARIO ("Importing C++ functions into Lua")
         LuaState lua;
         lua.export_function(add, "add");
         lua.export_function(multiply_string, "multiply_string");
+        lua.export_function(void_function, "void_function");
         lua.export_function(bad_function, "bad_function");
+        lua.export_function(identity, "identity");
 
         WHEN ("the exported functions are called in Lua")
         {
@@ -53,13 +61,16 @@ SCENARIO ("Importing C++ functions into Lua")
                 s->get_global("x");
                 s->get_global("y");
                 s->get_global("z");
-                auto x = s->get<int32_t>(-3);
-                auto y = s->get<int32_t>(-2);
-                auto z = s->get<std::string>(-1);
+                s->get_global("five");
+                auto x = s->get<int32_t>(-4);
+                auto y = s->get<int32_t>(-3);
+                auto z = s->get<std::string>(-2);
+                auto five = s->get<int>(-1);
 
                 REQUIRE (x == add(123, 456));
                 REQUIRE (y == add(-123, 789));
 		        REQUIRE (z == multiply_string("x", 3));
+                REQUIRE (five == 5);
             }
         }
 
@@ -85,5 +96,3 @@ SCENARIO ("Importing C++ functions into Lua")
 }
 
 //TODO multiple return types... ; lambda / function pointer
-//TODO function with void return type...
-//TODO function with 0 args...

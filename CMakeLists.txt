@@ -12,7 +12,7 @@ endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_WARNINGS}")
 
 # Compiler flags:
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -march=native -fcolor-diagnostics")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -march=native -fcolor-diagnostics")
 #target_link_libraries(c++ c++abi)
 
 # General project configuration:
