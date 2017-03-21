@@ -131,7 +131,8 @@ namespace lpp
                         std::tuple<AccumParamTypes...>&& params)
     {
         ParamType value = LuaStackGetter(plua_state, index_of_param + 1);
-        return std::tuple_cat(std::move(params), std::make_tuple(std::move(value)));
+        return std::tuple_cat(std::forward<std::tuple<AccumParamTypes...>>(params),
+                              std::make_tuple(std::forward<ParamType>(value)));
     }
 
     template <typename...>
@@ -145,8 +146,9 @@ namespace lpp
         auto operator()(lua_State* plua_state, int i,
                         std::tuple<AccumParamTypes...>&& params)
         {
+            using ParamTypes = std::tuple<AccumParamTypes...>;
             return do_fetch_param<LastParamType>(plua_state, i,
-                                                 std::move(params));
+                                                 std::forward<ParamTypes>(params));
         }
     };
 
@@ -159,9 +161,14 @@ namespace lpp
         auto operator()(lua_State* plua_state, int i,
                         std::tuple<AccumParamTypes...>&& params)
         {
-            auto params_updated = do_fetch_param<FirstParamType>(plua_state, i, std::move(params));
+            using ParamTypes = std::tuple<AccumParamTypes...>;
+            auto params_updated = do_fetch_param<FirstParamType>(
+                plua_state, i,
+                std::forward<ParamTypes>(params));
             return do_fetch_params<std::tuple<RestParamTypes...>,
-                                   decltype(params_updated)>{}(plua_state, i + 1, std::move(params_updated));
+                                   decltype(params_updated)>{}(
+                                       plua_state, i + 1,
+                                       std::forward<decltype(params_updated)>(params_updated));
         }
     };
 
@@ -189,7 +196,7 @@ namespace lpp
 
         auto f = *reinterpret_cast<Function*>(lua_touserdata(plua_state, lua_upvalueindex(1)));
         auto params = fetch_params<ParamTypes...>(plua_state);
-        auto result = apply_function(f, std::move(params), indices);
+        auto result = apply_function(f, std::forward<decltype(params)>(params), indices);
         lua_pop(plua_state, num_args);
         push_on_stack(plua_state, result);
         return 1;
@@ -197,14 +204,14 @@ namespace lpp
 
     // Helper function to export C++ functions to Lua.
     template <typename ReturnType, typename... ParamTypes>
-    Result export_function_helper(lua_State* plua_state,
-                                  ExportableFunction<ReturnType, ParamTypes...> f,
-                                  std::string&& lua_function_name)
+    void export_function_helper(lua_State* plua_state,
+                                ExportableFunction<ReturnType, ParamTypes...> f,
+                                std::string&& lua_function_name)
     {
-        if ((!plua_state) || (!f)) { return Result::ERROR; }
+        assert(plua_state && "Lua state not allowed to be nullptr!");
+        assert(f && "Function not allowed to be nullptr!");
         lua_pushlightuserdata(plua_state, &f);
         lua_pushcclosure(plua_state, &do_call<ReturnType, ParamTypes...>, 1);
         lua_setglobal(plua_state, lua_function_name.c_str());
-        return Result::OK;
     }
 }

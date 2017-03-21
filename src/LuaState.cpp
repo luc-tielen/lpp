@@ -12,19 +12,19 @@ namespace lpp
 
     LuaState::~LuaState() {}
 
-    Result LuaState::load_file(const std::string& script_path) const
+    void LuaState::load_file(const std::string& script_path) const
     {
-        return m_pstack->load_file(script_path);
+        m_pstack->load_file(script_path);
     }
 
-    Result LuaState::run_file(const std::string& script_path) const
+    void LuaState::run_file(const std::string& script_path) const
     {
-        return m_pstack->run_file(script_path);
+        m_pstack->run_file(script_path);
     }
 
-    Result LuaState::run_string(const std::string& script_code) const
+    void LuaState::run_string(const std::string& script_code) const
     {
-        return m_pstack->run_string(script_code);
+        m_pstack->run_string(script_code);
     }
 
     LuaFunctionBuilder LuaState::import_function_from(std::string&& file) const

@@ -2,7 +2,6 @@
 #include <string>
 #include <LuaFunctionBuilder.hpp>
 #include <LuaStack.h>
-#include <Result.h>
 
 
 namespace lpp
@@ -20,8 +19,8 @@ namespace lpp
         LuaState();
         LuaState(const LuaState& other) = delete;
         LuaState& operator=(const LuaState& other) = delete;
-        LuaState(LuaState&& other) = default;
-        LuaState& operator=(LuaState&& other) = default;
+        LuaState(LuaState&& other) noexcept = default;
+        LuaState& operator=(LuaState&& other) noexcept = default;
 
         /**
          * Destructor for the LuaState.
@@ -31,17 +30,17 @@ namespace lpp
         /**
          * Loads a Lua script.
          */
-        Result load_file(const std::string& script_path) const;
+        void load_file(const std::string& script_path) const;
 
         /**
          * Loads a Lua script from a file and runs it.
          */
-        Result run_file(const std::string& script_path) const;
+        void run_file(const std::string& script_path) const;
 
         /**
          * Runs a script from a Lua string in memory.
          */
-        Result run_string(const std::string& script_code) const;
+        void run_string(const std::string& script_code) const;
 
         /**
          * Helper function for importing a Lua function into C++.
@@ -59,10 +58,10 @@ namespace lpp
          * Exports a function from C++ to Lua.
          */
         template <typename ReturnType, typename... ParameterTypes>
-        Result export_function(ExportableFunction<ReturnType, ParameterTypes...> f,
-                               std::string&& lua_function_name) const
+        void export_function(ExportableFunction<ReturnType, ParameterTypes...> f,
+                             std::string&& lua_function_name) const
         {
-            return m_pstack->export_function(f, std::move(lua_function_name));
+            m_pstack->export_function(f, std::forward<std::string>(lua_function_name));
         }
 
     private:

@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <string>
 #include <lua.hpp>
-#include <Result.h>
 #include <LuaStackHelpers.hpp>
 
 
@@ -28,25 +27,25 @@ namespace lpp
         /**
          * Loads a Lua script.
          */
-        Result load_file(const std::string& script_path) const;
+        void load_file(const std::string& script_path) const;
 
         /**
          * Loads a Lua script from a file and runs it.
          */
-        Result run_file(const std::string& script_path) const;
+        void run_file(const std::string& script_path) const;
 
         /**
          * Runs a Lua script from a string in memory.
          */
-        Result run_string(const std::string& script_code) const;
+        void run_string(const std::string& script_code) const;
 
         /**
          * Do a protected call of a function with X amount of params and Y
          * return values and err handler on location 'err_handler_loc'.
          */
-        Result pcall(uint32_t param_amount,
-                     uint32_t return_amount,
-                     int32_t err_handler_loc) const;
+        void pcall(uint32_t param_amount,
+                   uint32_t return_amount,
+                   int32_t err_handler_loc) const;
 
         // Low level operations:
 
@@ -83,10 +82,11 @@ namespace lpp
          * Exports a function from C++ to Lua.
          */
         template <typename ReturnType, typename... ParameterTypes>
-        Result export_function(ExportableFunction<ReturnType, ParameterTypes...> f,
-                               std::string&& lua_function_name) const
+        void export_function(ExportableFunction<ReturnType, ParameterTypes...> f,
+                             std::string&& lua_function_name) const
         {
-            return export_function_helper(m_plua, f, std::move(lua_function_name));
+            export_function_helper(m_plua, f,
+                                   std::forward<std::string>(lua_function_name));
         }
 
     private:
