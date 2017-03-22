@@ -186,133 +186,81 @@ namespace lpp
                                std::tuple<>>{}(plua_state, 0, std::make_tuple());
     }
 
-    template <typename ReturnType>
-    struct apply_function_helper
+    template <typename ReturnType, typename... ParamTypes, size_t... Is>
+    auto apply_function(lua_State* plua_state,
+                ExportableFunction<ReturnType, ParamTypes...> f,
+                std::tuple<ParamTypes...>&& params,
+                std::index_sequence<Is...>)
     {
-        template <typename... ParamTypes>
-        auto apply(lua_State* plua_state,
-                   ExportableFunction<ReturnType, ParamTypes...> f,
-                   std::tuple<ParamTypes...>&& params)
+        try
         {
-            constexpr size_t num_args = sizeof...(ParamTypes);
-            constexpr auto indices = std::make_index_sequence<num_args>{};
-            return do_apply(plua_state, f, std::forward<decltype(params)>(params), indices);
-        }
-
-        template <typename... ParamTypes, size_t... Is>
-        auto do_apply(lua_State* plua_state,
-                      ExportableFunction<ReturnType, ParamTypes...> f,
-                      std::tuple<ParamTypes...>&& params,
-                      std::index_sequence<Is...>)
-        {
-            try
-            {
-                return f(std::get<Is>(params)...);
-            }
-            catch(const std::exception& e)
-            {
-                push_on_stack(plua_state, e.what());
-                lua_error(plua_state);
-            }
-
-            throw lpp::LuaError("Received unknown error during apply_function!");
-        }
-    };
-
-    template <>
-    struct apply_function_helper<void>
-    {
-        template <typename... ParamTypes>
-        void apply(lua_State* plua_state,
-                   ExportableFunction<void, ParamTypes...> f,
-                   std::tuple<ParamTypes...>&& params)
-        {
-            constexpr size_t num_args = sizeof...(ParamTypes);
-            constexpr auto indices = std::make_index_sequence<num_args>{};
-            do_apply(plua_state, f, std::forward<decltype(params)>(params), indices);
-        }
-
-        template <typename... ParamTypes, size_t... Is>
-        void do_apply(lua_State* plua_state,
-                      ExportableFunction<void, ParamTypes...> f,
-                      std::tuple<ParamTypes...>&& params,
-                      std::index_sequence<Is...>)
-        {
-            try
+            if constexpr (std::is_void<ReturnType>::value)
             {
                 f(std::get<Is>(params)...);
                 return;
             }
-            catch(const std::exception& e)
+            else
             {
-                push_on_stack(plua_state, e.what());
-                lua_error(plua_state);
+                return f(std::get<Is>(params)...);
             }
-
-            throw lpp::LuaError("Received unknown error during apply_function!");
         }
-    };
-
-    template <typename ReturnType>
-    struct call_helper
-    {
-        template <typename... ParamTypes>
-        int call(lua_State* plua_state)
+        catch(const std::exception& e)
         {
-            using Function = ExportableFunction<ReturnType, ParamTypes...>;
-            auto f = *reinterpret_cast<Function*>(lua_touserdata(plua_state, lua_upvalueindex(1)));
-            constexpr size_t num_args = sizeof...(ParamTypes);
+            push_on_stack(plua_state, e.what());
+            lua_error(plua_state);
+        }
+
+        throw lpp::LuaError("Received unknown error during apply_function!");
+    }
+
+    template <typename ReturnType, typename... ParamTypes>
+    int call_helper(lua_State* plua_state)
+    {
+        using Function = ExportableFunction<ReturnType, ParamTypes...>;
+        auto f = *reinterpret_cast<Function*>(lua_touserdata(plua_state, lua_upvalueindex(1)));
+        constexpr size_t num_args = sizeof...(ParamTypes);
+        constexpr auto indices = std::make_index_sequence<num_args>{};
+
+        if constexpr (std::is_void<ReturnType>::value)
+        {
             if constexpr (num_args == 0)
             {
                 auto params = std::make_tuple();
-                apply_function_helper<ReturnType>{}.template apply<ParamTypes...>(
-                    plua_state, f, std::forward<decltype(params)>(params));
+                apply_function(plua_state, f, std::forward<decltype(params)>(params), indices);
                 return 1;
             }
             else
             {
                 auto params = fetch_params<ParamTypes...>(plua_state);
-                auto result = apply_function_helper<ReturnType>{}.template apply<ParamTypes...>(
-                    plua_state, f, std::forward<decltype(params)>(params));
+                apply_function(plua_state, f, std::forward<decltype(params)>(params), indices);
+                lua_pop(plua_state, num_args);
+                return 1;
+            }
+        }
+        else
+        {
+            if constexpr (num_args == 0)
+            {
+                auto params = std::make_tuple();
+                auto result = apply_function(plua_state, f, std::forward<decltype(params)>(params), indices);
+                push_on_stack(plua_state, result);
+                return 1;
+            }
+            else
+            {
+                auto params = fetch_params<ParamTypes...>(plua_state);
+                auto result = apply_function(plua_state, f, std::forward<decltype(params)>(params), indices);
                 lua_pop(plua_state, num_args);
                 push_on_stack(plua_state, result);
                 return 1;
             }
         }
-    };
-
-    template <>
-    struct call_helper<void>
-    {
-        template <typename... ParamTypes>
-        int call(lua_State* plua_state)
-        {
-            using Function = ExportableFunction<void, ParamTypes...>;
-            auto f = *reinterpret_cast<Function*>(lua_touserdata(plua_state, lua_upvalueindex(1)));
-            constexpr size_t num_args = sizeof...(ParamTypes);
-            if constexpr (num_args == 0)
-            {
-                auto params = std::make_tuple();
-                apply_function_helper<void>{}.template apply<ParamTypes...>(
-                    plua_state, f, std::forward<decltype(params)>(params));
-                return 1;
-            }
-            else
-            {
-                // num_args > 0
-                auto params = fetch_params<ParamTypes...>(plua_state);
-                apply_function_helper<void>{}.template apply<ParamTypes...>(
-                    plua_state, f, std::forward<decltype(params)>(params));
-                lua_pop(plua_state, num_args);
-                return 1;
-            }
-        }
-    };
+    }
 
     template <typename ReturnType, typename... ParamTypes>
     int do_call(lua_State* plua_state)
     {
-        return call_helper<ReturnType>{}.template call<ParamTypes...>(plua_state);
+        return call_helper<ReturnType, ParamTypes...>(plua_state);
     }
 
     // Helper function to export C++ functions to Lua.
